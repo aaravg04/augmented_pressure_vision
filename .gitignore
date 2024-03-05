@@ -14,3 +14,5 @@ recording/meta_converter.py
 __pycache__/
 *.py[cod]
 *$py.class
+
+/reqs

@@ -24,8 +24,11 @@ def webcam_demo():
     # If your webcam has variable focus, often it is better to turn it off
     # cap.set(cv2.CAP_PROP_AUTOFOCUS, 0)  # Turn the autofocus off
     # cap.set(cv2.CAP_PROP_FOCUS, 15)  # Set to predetermined focus value for BRIO
+    if torch.cuda.is_available():
+        best_model = torch.load(find_latest_checkpoint(config.CONFIG_NAME))
+    else:
+        best_model = torch.load(find_latest_checkpoint(config.CONFIG_NAME), map_location=torch.device('cpu'))
 
-    best_model = torch.load(find_latest_checkpoint(config.CONFIG_NAME))
     best_model.eval()
 
     while True:

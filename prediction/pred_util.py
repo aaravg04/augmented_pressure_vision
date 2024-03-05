@@ -146,7 +146,7 @@ def resnet_invert_preprocess(rgb):
 
 def run_model(img, model, config):
     with torch.no_grad():
-        model_output = model(img.cuda())
+        model_output = model(img.to(torch.device('cuda' if torch.cuda.is_available() else 'cpu')))
         force_pred_class = model_output[0]
 
         force_pred_class = torch.argmax(force_pred_class, dim=1)
