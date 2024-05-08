@@ -10,6 +10,7 @@ Two more approaches to improve upon the current work done
 1: Stereo Vision 3D pooling implementation (`prediction/twoway-inf.py`)
 
 - [x] camera projection calibration
+- [x] calibration with multiple cameras and single chessboard
 - [ ] run inference on both camera input images post calibration
 - [ ] figure out how to pool inference in 3D (average, conv, something else?)
 - [ ] run trials of accuracy against pressure sensor (buy 2 cameras + pressure sensor from provided resources in paper)

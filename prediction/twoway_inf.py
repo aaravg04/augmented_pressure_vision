@@ -43,7 +43,7 @@ ps = []
 all_camera_images = []
 
 # set param -> n cameras
-n = 1
+n = 2
 
 # Get the list of all available camera indices
 camera_indices = list(range(n))  # looking for n cameras
