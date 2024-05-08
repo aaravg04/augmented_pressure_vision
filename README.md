@@ -1,0 +1,19 @@
+# Pressure Vision 3
+Two more approaches to improve upon the current work done
+
+1. take two camera inputs and use stereo vision to get the 3D pooling of the pressure inference
+
+2. take two images and train a new model to estimate the pressure based on two image inputs instead of a single image 
+
+## Approach Status
+
+1: Stereo vision 3D pooling implementation
+
+- [x] camera projection calibration
+- [ ] run inference on both camera input images post calibration
+- [ ] figure out how to pool inference in 3D (average, conv, something else?)
+- [ ] run trials of accuracy against pressure sensor (buy 2 cameras + pressure sensor from provided resources in paper)
+
+2: Dual image pressure estimation model training
+
+- [ ] everything lmao
