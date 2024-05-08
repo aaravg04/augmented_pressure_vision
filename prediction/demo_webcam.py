@@ -8,7 +8,7 @@ from pose.mediapipe_minimal import MediaPipeWrapper
 
 disp_x = 1920
 disp_y = 1080
-
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 def webcam_demo():
     window_name = 'PressureVision++ Webcam Demo'
@@ -71,5 +71,5 @@ if __name__ == "__main__":
     config = load_config(args.config)
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
+    # print(config)
     webcam_demo()
