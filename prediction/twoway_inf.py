@@ -49,7 +49,7 @@ ps = []
 all_camera_images = []
 
 # set param -> n cameras
-n = 2
+n = 1
 
 # Get the list of all available camera indices
 camera_indices = list(range(n))  # looking for n cameras
@@ -104,8 +104,8 @@ try:
         for i, cap in enumerate(captures):
             ret, camera_frame = cap.read()
             if ret:
-                frames.append(camera_frame)
-                cv2.imshow(f'Camera {captures.index(cap)}', camera_frame)
+                # frames.append(camera_frame)
+                # cv2.imshow(f'Camera {captures.index(cap)}', camera_frame)
                 base_img = camera_frame
 
                 bbox = get_hand_bbox(base_img, mp_wrapper)
@@ -116,6 +116,7 @@ try:
                 force_pred_full_frame = get_full_frame_1d(force_pred, bbox)
                 force_pred_color_full_frame = pressure_to_colormap(force_pred_full_frame)
 
+                # added for crappier cameras (i.e. my laptop camera lol)
                 force_pred_color_full_frame = cv2.resize(force_pred_color_full_frame, (base_img.shape[1], base_img.shape[0]))
                 # print(base_img.shape)
                 # print(force_pred_color_full_frame.shape)
@@ -128,10 +129,62 @@ try:
                 set_subframe(2, overlay_frame, disp_frame, title='Network Output with Overlay')
                 set_subframe(3, pressure_to_colormap(force_pred_full_frame), disp_frame, title='Network Output')
 
+                # force_pred_full_frame is 1080,1920
+                # scaled + broadcasted to 3d by p2c
+
+                # p2c(force_pred_full_frame) = 1080,1920,3 
+                # print(force_pred_full_frame.shape)
+                # cv2.imshow("im not insane right", force_pred_full_frame)
+                frames.append(force_pred_full_frame)
+                # print(pressure_to_colormap(force_pred_full_frame).shape)
                 cv2.imshow(f"cam {i} estimation", disp_frame)
+            
+            else:
+                frames.append(None)
                 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
+
+        # we have inference from all frames (or lack thereof -> None)
+        # project each one togehter space and pool
+        summed = np.zeros((disp_y, disp_x))        
+        # summed = np.zeros((1080,1920))
+
+        for i in range(n):
+            frame = frames[i]
+            rvecs, tvecs, mtx, dist = ps[i]
+
+            if frame is not None: # invalid frame/captured wrong
+                undistorted = cv2.undistort(frame, mtx, dist)
+                # Remove a dimension from undistorted, assuming it's the last dimension if it's 3D
+                if len(undistorted.shape) == 3:
+                    undistorted = undistorted[:, :, 0]
+
+                R,_ = cv2.Rodrigues(rvecs[0])
+                M = mtx @ R + tvecs[0]
+
+                transformed = cv2.warpPerspective(undistorted, M, undistorted.shape[::-1])
+
+                if undistorted.shape != summed.shape:
+                    undistorted = cv2.resize(undistorted, summed.shape[::-1])
+                    
+                summed += undistorted
+                # cv2.imshow("source frame", frame)
+                # print(undistored.shape)
+                # print(summed.shape)
+                # summed += cv2.resize(undistored, (disp_y, disp_x))
+                # summed += undistored
+            
+
+        # print(summed)
+        
+        # set_subframe(3, pressure_to_colormap(summed), disp_frame, title='pooled')
+
+        cv2.imshow(f"pooled from {n} cams", pressure_to_colormap(summed))
+
+        # cv2.imshow(f"cam {i} estimation", disp_frame)
+
+
 finally:
     for cap in captures:
         cap.release()
