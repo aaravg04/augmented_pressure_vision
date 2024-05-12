@@ -12,10 +12,11 @@ Two more approaches to improve upon the current work done
 - [x] camera projection calibration
 - [x] calibration with multiple cameras and single chessboard
 - [x] run inference on both camera input images post calibration
-- [ ] figure out how to pool inference in 3D (average, conv, something else?)
+- [ ] fix projection -> pooling isn't being done properly, distortion/resize issue?
+- [x] figure out how to pool inference in 3D (average, conv, something else?)
 - [ ] run trials of accuracy against pressure sensor (buy 2 cameras + pressure sensor from provided resources in paper)
 - [ ] refactor code so it can be run easily by a user (right now its a very messy script)
 
 2: Dual image pressure estimation model training
 
-- [ ] everything lmao
+- [ ] TODO: plan once phase 1 completed

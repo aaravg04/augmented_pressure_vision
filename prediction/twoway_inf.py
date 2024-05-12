@@ -49,14 +49,15 @@ ps = []
 all_camera_images = []
 
 # set param -> n cameras
-n = 1
+n = 2
+start_idx = 1 # use 0 if starting with integrated camera on laptop
 
 # Get the list of all available camera indices
 camera_indices = list(range(n))  # looking for n cameras
 
 # Try to open each camera and take one image
 for index in camera_indices:
-    cap = cv2.VideoCapture(index)
+    cap = cv2.VideoCapture(index + start_idx)
     if cap.isOpened():
         c = -1
         while c == -1:
@@ -71,6 +72,9 @@ for index in camera_indices:
                     print(f"Image captured from camera {index}")
 
         cap.release()
+        
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
     else:
         print(f"Camera {index} is not available")
 
@@ -87,7 +91,7 @@ cv2.destroyAllWindows()
 disp_x = 640
 disp_y = 480
 
-captures = [cv2.VideoCapture(i) for i in range(n)]
+captures = [cv2.VideoCapture(i + start_idx) for i in range(n)]
 mp_wrapper = MediaPipeWrapper()
 disp_frame = np.zeros((disp_y, disp_x, 3), dtype=np.uint8)
 config = load_config("paper")
@@ -147,15 +151,17 @@ try:
 
         # we have inference from all frames (or lack thereof -> None)
         # project each one togehter space and pool
-        summed = np.zeros((disp_y, disp_x))        
-        # summed = np.zeros((1080,1920))
+        final_dims = (disp_y, disp_x)
+        # summed = np.zeros((disp_y, disp_x))        
+        summed = np.zeros((1080,1920))
 
         for i in range(n):
             frame = frames[i]
             rvecs, tvecs, mtx, dist = ps[i]
 
             if frame is not None: # invalid frame/captured wrong
-                undistorted = cv2.undistort(frame, mtx, dist)
+                # undistorted = cv2.undistort(frame, mtx, dist)
+                undistorted = frame
                 # Remove a dimension from undistorted, assuming it's the last dimension if it's 3D
                 if len(undistorted.shape) == 3:
                     undistorted = undistorted[:, :, 0]
@@ -165,8 +171,8 @@ try:
 
                 transformed = cv2.warpPerspective(undistorted, M, undistorted.shape[::-1])
 
-                if undistorted.shape != summed.shape:
-                    undistorted = cv2.resize(undistorted, summed.shape[::-1])
+                # if undistorted.shape != summed.shape:
+                #     undistorted = cv2.resize(undistorted, summed.shape[::-1])
                     
                 summed += undistorted
                 # cv2.imshow("source frame", frame)
@@ -175,7 +181,7 @@ try:
                 # summed += cv2.resize(undistored, (disp_y, disp_x))
                 # summed += undistored
             
-
+        summed = cv2.resize(summed, final_dims)
         # print(summed)
         
         # set_subframe(3, pressure_to_colormap(summed), disp_frame, title='pooled')
