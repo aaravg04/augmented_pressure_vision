@@ -12,6 +12,8 @@ criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 objp = np.zeros((7*7,3), np.float32)
 objp[:,:2] = np.mgrid[0:7,0:7].T.reshape(-1,2)
 
+chessboardCorners = []
+
 # look for chessboard in image and calibrate camera
 def calibrate_camera(image) -> np.ndarray:
     # convert image to grayscale
@@ -22,7 +24,8 @@ def calibrate_camera(image) -> np.ndarray:
     if ret:
         corners = np.array([[corner for [corner] in corners]])
         c2 = cv2.cornerSubPix(gray, corners, (7, 7), (-1, -1), criteria)
-        
+        chessboardCorners.append(corners)
+        # print(corners)
         # testing purposes - draw chessboard to input image
         
         # cv2.drawChessboardCorners(image, (7, 7), c2, ret)
@@ -96,6 +99,9 @@ mp_wrapper = MediaPipeWrapper()
 disp_frame = np.zeros((disp_y, disp_x, 3), dtype=np.uint8)
 config = load_config("paper")
 
+H, mask = cv2.findHomography(chessboardCorners[0], chessboardCorners[1], cv2.RANSAC, 5.0)
+print(f"projection matrix {H} computed")
+
 if torch.cuda.is_available():
     best_model = torch.load(find_latest_checkpoint("paper"))
 else:
@@ -154,39 +160,37 @@ try:
         final_dims = (disp_y, disp_x)
         # summed = np.zeros((disp_y, disp_x))        
         summed = np.zeros((1080,1920))
+        """
+        TODO: 
+        lock to 2 camera input
+        
+        compute homography from second image w.r.t first 
+        use chessbaord image points for homography ->  M, mask = cv.findHomography(src_pts, dst_pts, cv.RANSAC,5.0)
 
-        for i in range(n):
-            frame = frames[i]
-            rvecs, tvecs, mtx, dist = ps[i]
 
-            if frame is not None: # invalid frame/captured wrong
-                # undistorted = cv2.undistort(frame, mtx, dist)
-                undistorted = frame
-                # Remove a dimension from undistorted, assuming it's the last dimension if it's 3D
-                if len(undistorted.shape) == 3:
-                    undistorted = undistorted[:, :, 0]
-
-                R,_ = cv2.Rodrigues(rvecs[0])
-                M = mtx @ R + tvecs[0]
-
-                transformed = cv2.warpPerspective(undistorted, M, undistorted.shape[::-1])
-
-                # if undistorted.shape != summed.shape:
-                #     undistorted = cv2.resize(undistorted, summed.shape[::-1])
-                    
-                summed += undistorted
-                # cv2.imshow("source frame", frame)
-                # print(undistored.shape)
-                # print(summed.shape)
-                # summed += cv2.resize(undistored, (disp_y, disp_x))
-                # summed += undistored
+        stitch by similar points to pano -> 
             
-        summed = cv2.resize(summed, final_dims)
+            out = cv.warpPerspective(src2,np.linalg.inv(homography),(b+n, a),flags=cv.INTER_LINEAR)
+            ei2 = out
+            ei2[:a,:b] = src1
+        
+        """
+        src1, src2 = frames
+        a,b = src1.shape
+        m,n2 = src2.shape
+        out = cv2.warpPerspective(src2,H,(b+n2, a),flags=cv2.INTER_LINEAR)
+        ei2 = out
+        # ei2[:a,:b] += src1
+
+        # take max at each point
+        ei2[:a, :b] = np.maximum(ei2[:a, :b], src1)
+
+        # summed = cv2.resize(summed, final_dims)
         # print(summed)
         
         # set_subframe(3, pressure_to_colormap(summed), disp_frame, title='pooled')
 
-        cv2.imshow(f"pooled from {n} cams", pressure_to_colormap(summed))
+        cv2.imshow(f"pooled from {n} cams", pressure_to_colormap(ei2))
 
         # cv2.imshow(f"cam {i} estimation", disp_frame)
 

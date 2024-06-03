@@ -12,11 +12,11 @@ Two more approaches to improve upon the current work done
 - [x] camera projection calibration
 - [x] calibration with multiple cameras and single chessboard
 - [x] run inference on both camera input images post calibration
-- [ ] fix projection -> pooling isn't being done properly, distortion/resize issue?
+- [x] fix projection -> seems to be working, using panorama stitching for overlapping features to pool (use pix[i,j] = max(img1[i,j], img2[i,j]) instead of addition to avoid inflation of points where pressure estimated from both angles)
 - [x] figure out how to pool inference in 3D (average, conv, something else?)
-- [ ] run trials of accuracy against pressure sensor (buy 2 cameras + pressure sensor from provided resources in paper)
+- [ ] run trials of accuracy against pressure sensor (single camera vs double camera approach to see which is better, mIoU metric because segmentation?)
 - [ ] refactor code so it can be run easily by a user (right now its a very messy script)
 
 2: Dual image pressure estimation model training
 
-- [ ] TODO: plan once phase 1 completed
+- [ ] TODO: plan once phase 1 completed (likely a very similar architecture to the preexisting model though, just for two image inputs instead of one)
